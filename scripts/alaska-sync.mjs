@@ -9,20 +9,23 @@ const REPOS = [
   { name: 'open-design-codex', path: path.join(home, 'Desktop/open-design-codex') }
 ];
 
+// 엔진(V3) 폴더 내의 실제 소스 위치와 백업 위치 설정
+const ENGINE_SOURCE = path.join(home, 'Desktop/system/skills/fashion/');
+const BACKUP_TARGET = path.join(home, 'Desktop/open-design-ALASKA/skills/fashion/');
+
 const commitMsg = process.argv.includes('--message') 
   ? process.argv[process.argv.indexOf('--message') + 1] 
-  : "feat(alaska): automatic brand sync and refactor update";
+  : "feat(alaska): engine-centered sync from V3 system";
 
 try {
-  // 1. 파일 동기화 (ALASKA -> system)
-  console.log("🔄 Step 1: Syncing files to system repository...");
-  execSync(`cp -r ${path.join(home, 'Desktop/open-design-ALASKA/skills/fashion/')}* ${path.join(home, 'Desktop/system/skills/fashion/')}`);
+  // 1. 역방향 동기화 (system -> open-design-ALASKA)
+  console.log("🔄 Step 1: Syncing from ENGINE (system) to BACKUP (ALASKA)...");
+  execSync(`cp -r ${ENGINE_SOURCE}* ${BACKUP_TARGET}`);
 
   // 2. 각 레포지토리 Git 작업
   for (const repo of REPOS) {
     console.log(`\n📦 Processing [${repo.name}]...`);
     
-    // 스테이징 및 커밋 (변경사항이 있을 때만)
     execSync(`git -C ${repo.path} add .`);
     try {
       execSync(`git -C ${repo.path} commit -m "${commitMsg}"`, { stdio: 'ignore' });
@@ -31,15 +34,15 @@ try {
       console.log(`ℹ️ No changes to commit in ${repo.name}`);
     }
 
-    // 푸시 (Pull Rebase 포함하여 충돌 방지)
+    // 푸시 전 최신 상태 확보 및 푸시
     console.log(`🚀 Pushing ${repo.name} to origin brand/alaska...`);
     execSync(`git -C ${repo.path} pull --rebase origin brand/alaska`);
     execSync(`git -C ${repo.path} push origin brand/alaska`);
   }
 
-  console.log("\n✨ All ALASKA repositories are synced and pushed successfully!");
+  console.log("\n✨ Engine sync complete! All repositories are up-to-date.");
 
 } catch (error) {
-  console.error("\n❌ Error occurred during sync:", error.message);
+  console.error("\n❌ Error occurred during engine sync:", error.message);
   process.exit(1);
 }
